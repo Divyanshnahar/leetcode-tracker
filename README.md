@@ -41,6 +41,7 @@ Browser → GET  /api/users         → Neon DB (list all)
 Browser → POST /api/users         → LeetCode GQL → Neon DB (upsert)
 Browser → DELETE /api/users/:u    → Neon DB (delete row)
 Browser → PATCH  /api/users/:u    → LeetCode GQL → Neon DB (refresh)
+Browser → PATCH  /api/users      → LeetCode GQL → Neon DB (refresh all users)
 ```
 
 ## Scoring Formula

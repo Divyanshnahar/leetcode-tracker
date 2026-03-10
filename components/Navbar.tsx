@@ -5,7 +5,8 @@ import { useStore } from '@/lib/store'
 
 export default function Navbar() {
   const pathname = usePathname()
-  const { users } = useStore()
+  const { users, refreshAll, loading } = useStore()
+  const isRefreshing = loading['refreshAll']
 
   return (
     <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
@@ -22,7 +23,7 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Nav links */}
+        {/* Nav links + refresh button */}
         <div className="flex items-center gap-1">
           <Link href="/"
             className="px-3 py-1.5 rounded text-sm transition-all"
@@ -46,6 +47,21 @@ export default function Navbar() {
               </span>
             )}
           </Link>
+          <button
+            onClick={() => refreshAll()}
+            disabled={isRefreshing || users.length === 0}
+            title="Refresh all users"
+            className="px-2 py-1 rounded text-sm transition-all flex items-center"
+            style={{
+              color: isRefreshing || users.length === 0 ? 'var(--muted)' : 'var(--accent)',
+            }}
+          >
+            {isRefreshing ? (
+              <span className="spinner inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+            ) : (
+              '🔄'
+            )}
+          </button>
         </div>
       </div>
     </nav>

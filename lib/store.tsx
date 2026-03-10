@@ -7,6 +7,7 @@ interface StoreCtx {
   addUser: (username: string) => Promise<void>
   removeUser: (username: string) => Promise<void>
   refreshUser: (username: string) => Promise<void>
+  refreshAll: () => Promise<void>              // new action
   loading: Record<string, boolean>
   error: Record<string, string>
   initialLoading: boolean
@@ -53,6 +54,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // refresh all users' data by calling new backend endpoint
+  const refreshAll = async () => {
+    setLoading(l => ({ ...l, refreshAll: true }))
+    setError(e => ({ ...e, refreshAll: '' }))
+    try {
+      const res = await fetch('/api/users', { method: 'PATCH' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to refresh all')
+      if (Array.isArray(data)) {
+        setUsers(data)
+      }
+    } catch (err) {
+      setError(e => ({ ...e, refreshAll: err instanceof Error ? err.message : 'Error' }))
+    } finally {
+      setLoading(l => ({ ...l, refreshAll: false }))
+    }
+  }
+
   const removeUser = async (username: string) => {
     setLoading(l => ({ ...l, [username]: true }))
     try {
@@ -78,7 +97,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Store.Provider value={{ users, addUser, removeUser, refreshUser, loading, error, initialLoading }}>
+    <Store.Provider value={{ users, addUser, removeUser, refreshUser, refreshAll, loading, error, initialLoading }}>
       {children}
     </Store.Provider>
   )

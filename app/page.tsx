@@ -21,9 +21,11 @@ function Dashboard() {
           </p>
         </div>
 
-        {/* Add user form */}
-        <div className="mb-8 max-w-xl">
+        {/* Add user form + refresh all button */}
+        <div className="mb-8 max-w-xl flex items-start justify-between">
           <AddUserForm />
+          {/* refresh button placed beside form on larger screens */}
+          <RefreshAllButton />
         </div>
 
         {/* Loading skeleton */}
@@ -52,6 +54,44 @@ function Dashboard() {
           </div>
         )}
       </main>
+    </div>
+  )
+}
+
+// small helper component for refresh button
+type RefreshButtonProps = {}
+
+function RefreshAllButton() {
+  const { refreshAll, loading, users, error } = useStore()
+  const isLoading = loading['refreshAll']
+
+  return (
+    <div className="flex flex-col items-start">
+      <button
+        onClick={() => refreshAll()}
+        disabled={isLoading || users.length === 0}
+        className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+        style={{
+          background: isLoading || users.length === 0 ? 'var(--border)' : 'var(--accent)',
+          color: isLoading || users.length === 0 ? 'var(--muted)' : '#000',
+          cursor: isLoading || users.length === 0 ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {isLoading ? (
+          <>
+            <span className="spinner inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+            Refreshing...
+          </>
+        ) : (
+          'Refresh all'
+        )}
+      </button>
+      {error['refreshAll'] && (
+        <div className="mt-2 text-sm px-3 py-2 rounded-lg"
+          style={{ background: 'rgba(232,69,69,0.1)', color: 'var(--accent2)', border: '1px solid rgba(232,69,69,0.2)' }}>
+          ⚠ {error['refreshAll']}
+        </div>
+      )}
     </div>
   )
 }

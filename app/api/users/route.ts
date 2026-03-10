@@ -4,6 +4,110 @@ import { users } from '@/lib/schema'
 import { desc } from 'drizzle-orm'
 import { LeetCodeUser } from '@/lib/types'
 
+// helper: invoke LeetCode fetch endpoint and parse result
+async function fetchFromLeetCode(username: string, origin: string): Promise<LeetCodeUser> {
+  const lcRes = await fetch(
+    `${origin}/api/leetcode?username=${encodeURIComponent(username.trim())}`
+  )
+  const lcData = await lcRes.json()
+  if (!lcRes.ok) throw new Error(lcData.error || 'leetcode fetch failed')
+  return lcData as LeetCodeUser
+}
+
+// helper: insert / update a LeetCodeUser in the DB and return the row
+async function upsertUserData(u: LeetCodeUser) {
+  const [row] = await db
+    .insert(users)
+    .values({
+      username: u.username,
+      updatedAt: new Date(),
+
+      realName: u.profile.realName || null,
+      userAvatar: u.profile.userAvatar || null,
+      countryName: u.profile.countryName || null,
+      company: u.profile.company || null,
+      jobTitle: u.profile.jobTitle || null,
+      school: u.profile.school || null,
+      aboutMe: u.profile.aboutMe || null,
+      githubUrl: u.profile.githubUrl || null,
+      twitterUrl: u.profile.twitterUrl || null,
+      linkedinUrl: u.profile.linkedinUrl || null,
+      websites: u.profile.websites || [],
+      skillTags: u.profile.skillTags || [],
+      reputation: u.profile.reputation || 0,
+      solutionCount: u.profile.solutionCount || 0,
+      globalRanking: u.profile.ranking || null,
+
+      totalSolved: u.stats.totalSolved,
+      totalSubmissions: u.stats.totalSubmissions,
+      acceptanceRate: u.stats.acceptanceRate,
+      easySolved: u.stats.easy.solved,
+      easySubmissions: u.stats.easy.submissions,
+      mediumSolved: u.stats.medium.solved,
+      mediumSubmissions: u.stats.medium.submissions,
+      hardSolved: u.stats.hard.solved,
+      hardSubmissions: u.stats.hard.submissions,
+
+      contestRating: u.contest?.rating ?? null,
+      contestGlobalRanking: u.contest?.globalRanking ?? null,
+      contestTotalParticipants: u.contest?.totalParticipants ?? null,
+      contestTopPercentage: u.contest?.topPercentage ?? null,
+      attendedContests: u.contest?.attendedContests ?? null,
+      contestBadge: u.contest?.badge ?? null,
+
+      streak: u.calendar?.streak ?? 0,
+      totalActiveDays: u.calendar?.totalActiveDays ?? 0,
+      activeYears: u.calendar?.activeYears ?? [],
+
+      badges: u.badges ?? [],
+      activeBadge: u.activeBadge ?? null,
+      recentSubmissions: u.recentSubmissions ?? [],
+    })
+    .onConflictDoUpdate({
+      target: users.username,
+      set: {
+        updatedAt: new Date(),
+        realName: u.profile.realName || null,
+        userAvatar: u.profile.userAvatar || null,
+        countryName: u.profile.countryName || null,
+        company: u.profile.company || null,
+        jobTitle: u.profile.jobTitle || null,
+        school: u.profile.school || null,
+        githubUrl: u.profile.githubUrl || null,
+        twitterUrl: u.profile.twitterUrl || null,
+        linkedinUrl: u.profile.linkedinUrl || null,
+        websites: u.profile.websites || [],
+        skillTags: u.profile.skillTags || [],
+        reputation: u.profile.reputation || 0,
+        solutionCount: u.profile.solutionCount || 0,
+        globalRanking: u.profile.ranking || null,
+        totalSolved: u.stats.totalSolved,
+        totalSubmissions: u.stats.totalSubmissions,
+        acceptanceRate: u.stats.acceptanceRate,
+        easySolved: u.stats.easy.solved,
+        easySubmissions: u.stats.easy.submissions,
+        mediumSolved: u.stats.medium.solved,
+        mediumSubmissions: u.stats.medium.submissions,
+        hardSolved: u.stats.hard.solved,
+        hardSubmissions: u.stats.hard.submissions,
+        contestRating: u.contest?.rating ?? null,
+        contestGlobalRanking: u.contest?.globalRanking ?? null,
+        contestTotalParticipants: u.contest?.totalParticipants ?? null,
+        contestTopPercentage: u.contest?.topPercentage ?? null,
+        attendedContests: u.contest?.attendedContests ?? null,
+        contestBadge: u.contest?.badge ?? null,
+        streak: u.calendar?.streak ?? 0,
+        totalActiveDays: u.calendar?.totalActiveDays ?? 0,
+        activeYears: u.calendar?.activeYears ?? [],
+        badges: u.badges ?? [],
+        activeBadge: u.activeBadge ?? null,
+        recentSubmissions: u.recentSubmissions ?? [],
+      },
+    })
+    .returning()
+  return row
+}
+
 // GET /api/users — list all users from DB
 export async function GET() {
   try {
@@ -22,107 +126,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Username required' }, { status: 400 })
   }
 
-  // Fetch from LeetCode API
-  const lcRes = await fetch(
-    `${request.nextUrl.origin}/api/leetcode?username=${encodeURIComponent(username.trim())}`
-  )
-  const lcData = await lcRes.json()
-  if (!lcRes.ok) return NextResponse.json({ error: lcData.error }, { status: lcRes.status })
-
-  const u: LeetCodeUser = lcData
-
   try {
-    const [row] = await db
-      .insert(users)
-      .values({
-        username: u.username,
-        updatedAt: new Date(),
-
-        realName: u.profile.realName || null,
-        userAvatar: u.profile.userAvatar || null,
-        countryName: u.profile.countryName || null,
-        company: u.profile.company || null,
-        jobTitle: u.profile.jobTitle || null,
-        school: u.profile.school || null,
-        aboutMe: u.profile.aboutMe || null,
-        githubUrl: u.profile.githubUrl || null,
-        twitterUrl: u.profile.twitterUrl || null,
-        linkedinUrl: u.profile.linkedinUrl || null,
-        websites: u.profile.websites || [],
-        skillTags: u.profile.skillTags || [],
-        reputation: u.profile.reputation || 0,
-        solutionCount: u.profile.solutionCount || 0,
-        globalRanking: u.profile.ranking || null,
-
-        totalSolved: u.stats.totalSolved,
-        totalSubmissions: u.stats.totalSubmissions,
-        acceptanceRate: u.stats.acceptanceRate,
-        easySolved: u.stats.easy.solved,
-        easySubmissions: u.stats.easy.submissions,
-        mediumSolved: u.stats.medium.solved,
-        mediumSubmissions: u.stats.medium.submissions,
-        hardSolved: u.stats.hard.solved,
-        hardSubmissions: u.stats.hard.submissions,
-
-        contestRating: u.contest?.rating ?? null,
-        contestGlobalRanking: u.contest?.globalRanking ?? null,
-        contestTotalParticipants: u.contest?.totalParticipants ?? null,
-        contestTopPercentage: u.contest?.topPercentage ?? null,
-        attendedContests: u.contest?.attendedContests ?? null,
-        contestBadge: u.contest?.badge ?? null,
-
-        streak: u.calendar?.streak ?? 0,
-        totalActiveDays: u.calendar?.totalActiveDays ?? 0,
-        activeYears: u.calendar?.activeYears ?? [],
-
-        badges: u.badges ?? [],
-        activeBadge: u.activeBadge ?? null,
-        recentSubmissions: u.recentSubmissions ?? [],
-      })
-      .onConflictDoUpdate({
-        target: users.username,
-        set: {
-          updatedAt: new Date(),
-          realName: u.profile.realName || null,
-          userAvatar: u.profile.userAvatar || null,
-          countryName: u.profile.countryName || null,
-          company: u.profile.company || null,
-          jobTitle: u.profile.jobTitle || null,
-          school: u.profile.school || null,
-          githubUrl: u.profile.githubUrl || null,
-          twitterUrl: u.profile.twitterUrl || null,
-          linkedinUrl: u.profile.linkedinUrl || null,
-          websites: u.profile.websites || [],
-          skillTags: u.profile.skillTags || [],
-          reputation: u.profile.reputation || 0,
-          solutionCount: u.profile.solutionCount || 0,
-          globalRanking: u.profile.ranking || null,
-          totalSolved: u.stats.totalSolved,
-          totalSubmissions: u.stats.totalSubmissions,
-          acceptanceRate: u.stats.acceptanceRate,
-          easySolved: u.stats.easy.solved,
-          easySubmissions: u.stats.easy.submissions,
-          mediumSolved: u.stats.medium.solved,
-          mediumSubmissions: u.stats.medium.submissions,
-          hardSolved: u.stats.hard.solved,
-          hardSubmissions: u.stats.hard.submissions,
-          contestRating: u.contest?.rating ?? null,
-          contestGlobalRanking: u.contest?.globalRanking ?? null,
-          contestTotalParticipants: u.contest?.totalParticipants ?? null,
-          contestTopPercentage: u.contest?.topPercentage ?? null,
-          attendedContests: u.contest?.attendedContests ?? null,
-          contestBadge: u.contest?.badge ?? null,
-          streak: u.calendar?.streak ?? 0,
-          totalActiveDays: u.calendar?.totalActiveDays ?? 0,
-          activeYears: u.calendar?.activeYears ?? [],
-          badges: u.badges ?? [],
-          activeBadge: u.activeBadge ?? null,
-          recentSubmissions: u.recentSubmissions ?? [],
-        },
-      })
-      .returning()
-
+    const u = await fetchFromLeetCode(username, request.nextUrl.origin)
+    const row = await upsertUserData(u)
     return NextResponse.json(rowToUser(row))
+  } catch (err) {
+    console.error(err)
+    // could be fetch error or db error
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Database error' }, { status: 500 })
+  }
+}
+
+// PATCH /api/users — refresh every user in DB
+export async function PATCH(request: NextRequest) {
+  try {
+    const origin = request.nextUrl.origin
+    const existing = await db.select().from(users)
+    const refreshed: LeetCodeUser[] = []
+
+    for (const row of existing) {
+      try {
+        const u = await fetchFromLeetCode(row.username, origin)
+        const newRow = await upsertUserData(u)
+        refreshed.push(rowToUser(newRow))
+      } catch (innerErr) {
+        console.error('failed to refresh', row.username, innerErr)
+        // abort entire batch on first failure
+        throw innerErr
+      }
+    }
+
+    return NextResponse.json(refreshed)
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
