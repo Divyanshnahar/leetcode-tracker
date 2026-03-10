@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export function rowToUser(row: typeof users.$inferSelect): LeetCodeUser {
+function rowToUser(row: typeof users.$inferSelect): LeetCodeUser {
   return {
     username: row.username,
     addedAt: row.addedAt.getTime(),
