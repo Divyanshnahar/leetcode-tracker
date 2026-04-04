@@ -4,6 +4,9 @@ import { users } from '@/lib/schema'
 import { desc } from 'drizzle-orm'
 import { LeetCodeUser } from '@/lib/types'
 
+const SITE_ORIGIN = process.env.SITE_ORIGIN || process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000'
+const REFRESH_INTERVAL = 1000 * 60 * 60
+
 // helper: invoke LeetCode fetch endpoint and parse result
 async function fetchFromLeetCode(username: string, origin: string): Promise<LeetCodeUser> {
   const lcRes = await fetch(
@@ -13,6 +16,34 @@ async function fetchFromLeetCode(username: string, origin: string): Promise<Leet
   if (!lcRes.ok) throw new Error(lcData.error || 'leetcode fetch failed')
   return lcData as LeetCodeUser
 }
+
+async function refreshAllDataInBackground() {
+  const existingUsers = await db.select().from(users)
+  if (!existingUsers.length) return
+
+  console.log(`[hourly-refresh] refreshing ${existingUsers.length} users from LeetCode`)
+  for (const row of existingUsers) {
+    try {
+      const u = await fetchFromLeetCode(row.username, SITE_ORIGIN)
+      await upsertUserData(u)
+    } catch (err) {
+      console.error('[hourly-refresh] failed to refresh', row.username, err)
+    }
+  }
+  console.log('[hourly-refresh] refresh complete')
+}
+
+function startHourlyRefresh() {
+  const globalAny = globalThis as any
+  if (globalAny.__leetcodeLeaderboardHourlyRefreshStarted) return
+  globalAny.__leetcodeLeaderboardHourlyRefreshStarted = true
+
+  setInterval(() => {
+    refreshAllDataInBackground().catch(err => console.error('[hourly-refresh] error', err))
+  }, REFRESH_INTERVAL)
+}
+
+startHourlyRefresh()
 
 // helper: insert / update a LeetCodeUser in the DB and return the row
 async function upsertUserData(u: LeetCodeUser) {
