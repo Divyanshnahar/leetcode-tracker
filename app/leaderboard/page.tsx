@@ -98,10 +98,10 @@ function Leaderboard() {
         {/* Table */}
         <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)' }}>
           <div className="px-5 py-3 text-xs font-semibold grid gap-4"
-            style={{ background: 'var(--surface2)', color: 'var(--muted)', gridTemplateColumns: '2rem 1fr 4rem 4rem 4rem 5rem 4rem', borderBottom: '1px solid var(--border)' }}>
+            style={{ background: 'var(--surface2)', color: 'var(--muted)', gridTemplateColumns: '2rem 1fr 4rem 4rem 4rem 4rem 5rem 4rem', borderBottom: '1px solid var(--border)' }}>
             <span>#</span><span>User</span><span className="text-right">Easy</span>
             <span className="text-right">Med</span><span className="text-right">Hard</span>
-            <span className="text-right">Rating</span><span className="text-right">Score</span>
+            <span className="text-right">Total</span><span className="text-right">Rating</span><span className="text-right">Score</span>
           </div>
 
           {sorted.map((user, idx) => {
@@ -111,7 +111,7 @@ function Leaderboard() {
               <div key={user.username} className="relative px-5 py-4 transition-all hover:bg-white/[0.02] animate-fade-in"
                 style={{ borderBottom: idx < sorted.length - 1 ? '1px solid var(--border)' : 'none', background: idx === 0 ? 'rgba(245,166,35,0.03)' : undefined, animationDelay: `${idx * 0.05}s` }}>
                 <div className="absolute left-0 top-0 bottom-0 opacity-5 pointer-events-none" style={{ width: `${barWidth}%`, background: 'var(--accent)' }} />
-                <div className="relative grid gap-4 items-center" style={{ gridTemplateColumns: '2rem 1fr 4rem 4rem 4rem 5rem 4rem' }}>
+                <div className="relative grid gap-4 items-center" style={{ gridTemplateColumns: '2rem 1fr 4rem 4rem 4rem 4rem 5rem 4rem' }}>
                   <RankBadge rank={idx + 1} />
                   <div className="flex items-center gap-3 min-w-0">
                     {user.profile.userAvatar ? (
@@ -130,6 +130,7 @@ function Leaderboard() {
                   <div className="text-right counter text-sm font-bold" style={{ color: 'var(--easy)' }}>{user.stats.easy.solved}</div>
                   <div className="text-right counter text-sm font-bold" style={{ color: 'var(--medium)' }}>{user.stats.medium.solved}</div>
                   <div className="text-right counter text-sm font-bold" style={{ color: 'var(--hard)' }}>{user.stats.hard.solved}</div>
+                  <div className="text-right counter text-sm font-bold" style={{ color: 'var(--text)' }}>{user.stats.totalSolved}</div>
                   <div className="text-right counter text-sm" style={{ color: 'var(--text)' }}>{user.contest?.rating || <span style={{ color: 'var(--muted)' }}>—</span>}</div>
                   <div className="text-right counter text-sm font-bold" style={{ color: 'var(--accent)' }}>{score}</div>
                 </div>

@@ -99,7 +99,7 @@ export default function UserCard({ user }: { user: LeetCodeUser }) {
         </div>
 
         {/* Score */}
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: 'var(--muted)' }}>Global Rank</span>
             <span className="counter text-xs font-bold" style={{ color: 'var(--accent)' }}>
@@ -107,10 +107,22 @@ export default function UserCard({ user }: { user: LeetCodeUser }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>Contest Rating</span>
+            <span className="counter text-xs font-bold" style={{ color: 'var(--text)' }}>
+              {user.contest?.rating ? user.contest.rating : '—'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
             <span className="text-xs" style={{ color: 'var(--muted)' }}>Score</span>
             <span className="counter text-xs font-bold px-2 py-0.5 rounded"
               style={{ background: 'rgba(245,166,35,0.1)', color: 'var(--accent)' }}>
               {score}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: 'var(--muted)' }}>Total Solved</span>
+            <span className="counter text-xs font-bold" style={{ color: 'var(--text)' }}>
+              {user.stats.totalSolved}
             </span>
           </div>
         </div>
